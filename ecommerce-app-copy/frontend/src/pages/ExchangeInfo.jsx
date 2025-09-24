@@ -109,6 +109,7 @@ const ExchangeInfo = () => {
         </label>
 
         <button type="submit" className='bg-blue-500 text-white px-4 py-2 rounded'>Submit Exchange</button>
+        <p className='pt-1.5 pb-1.5 text-red-600'>Please be noted after the week from the purchase we will ignore the exchange requests.</p>
       </form>
     </div>
   );
