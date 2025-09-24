@@ -106,6 +106,7 @@ const RefundInfo = () => {
         </label>
 
         <button type="submit" className='bg-red-500 text-white px-4 py-2 rounded'>Submit Refund</button>
+        <p className='pt-1.5 pb-1.5 text-red-600'>Please be noted after the week from the purchase we will ignore the refund requests.</p>
       </form>
     </div>
   );
