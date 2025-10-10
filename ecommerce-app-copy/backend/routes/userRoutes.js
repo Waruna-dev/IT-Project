@@ -5,7 +5,7 @@ import roleAuth from '../middleware/adminAuth.js';
 import authUser from '../middleware/auth.js';
 //
 import authMiddleware from '../middleware/authMiddleware.js';
-import { fetchUserProfile, editUserProfile } from '../controllers/userProfileController.js';
+import { fetchUserProfile, editUserProfile, deleteUserAccount  } from '../controllers/userProfileController.js';
 import verifyToken from "../middleware/verifyToken.js";
 
 
@@ -33,6 +33,7 @@ userRouter.put('/profile', authMiddleware, updateProfile);
 // User profile routes
 userRouter.get('/profile', verifyToken, fetchUserProfile);
 userRouter.put('/profile', verifyToken, editUserProfile);
+userRouter.delete("/profile", verifyToken, deleteUserAccount);
 
 
 export default userRouter;
