@@ -66,13 +66,13 @@ const Profile = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium">Email</label>
+          <label className="block text-sm font-medium">Email (Read only)</label>
           <input
             type="email"
             name="email"
             value={profile.email}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
+            readOnly // <-- make it read-only
+            className="w-full border p-2 rounded bg-gray-100 cursor-not-allowed"
           />
         </div>
 
