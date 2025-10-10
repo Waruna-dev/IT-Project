@@ -5,6 +5,9 @@ import roleAuth from '../middleware/adminAuth.js';
 import authUser from '../middleware/auth.js';
 //
 import authMiddleware from '../middleware/authMiddleware.js';
+import { fetchUserProfile, editUserProfile } from '../controllers/userProfileController.js';
+import verifyToken from "../middleware/verifyToken.js";
+
 
 const userRouter =  express.Router()
 
@@ -26,6 +29,10 @@ userRouter.delete('/delete/:id', roleAuth('admin'), deleteUser);
 // profile routes (common for all roles)
 userRouter.get('/profile', authMiddleware, getProfile);
 userRouter.put('/profile', authMiddleware, updateProfile);
+
+// User profile routes
+userRouter.get('/profile', verifyToken, fetchUserProfile);
+userRouter.put('/profile', verifyToken, editUserProfile);
 
 
 export default userRouter;
