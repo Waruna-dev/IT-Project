@@ -7,6 +7,7 @@ import authUser from '../middleware/auth.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 import { fetchUserProfile, editUserProfile, deleteUserAccount  } from '../controllers/userProfileController.js';
 import verifyToken from "../middleware/verifyToken.js";
+import { forgotPassword, resetPassword } from '../controllers/forgotPasswordController.js';
 
 
 const userRouter =  express.Router()
@@ -34,6 +35,10 @@ userRouter.put('/profile', authMiddleware, updateProfile);
 userRouter.get('/profile', verifyToken, fetchUserProfile);
 userRouter.put('/profile', verifyToken, editUserProfile);
 userRouter.delete("/profile", verifyToken, deleteUserAccount);
+
+// Forgot Password routes
+userRouter.post('/forgot-password', forgotPassword);
+userRouter.post('/reset-password', resetPassword);
 
 
 export default userRouter;

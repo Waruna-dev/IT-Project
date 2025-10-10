@@ -5,7 +5,9 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     cartData: { type: Object, default: {} }, //when user created cartis an empty object 
-    role: { type: String, enum: ['customer', 'staff', 'owner', 'delivery'], default: 'customer' }
+    role: { type: String, enum: ['customer', 'staff', 'owner', 'delivery'], default: 'customer' },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date }, 
 
 }, { minimize: false }) //when we create the cart data by default we have provided the value empty object
 
