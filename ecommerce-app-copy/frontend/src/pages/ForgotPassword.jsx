@@ -34,6 +34,7 @@ const ForgotPassword = () => {
           onChange={(e) => setEmail(e.target.value)}
           className="border p-2 rounded"
           required
+          disabled={loading} // disable input while sending
         />
         <button
           type="submit"
