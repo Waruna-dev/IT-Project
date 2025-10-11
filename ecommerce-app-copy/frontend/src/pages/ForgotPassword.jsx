@@ -4,15 +4,22 @@ import { toast } from "react-toastify";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true); // show "Sending..."
     try {
-      const { data } = await axios.post("http://localhost:4000/api/user/forgot-password", { email });
+      const { data } = await axios.post(
+        "http://localhost:4000/api/user/forgot-password",
+        { email }
+      );
       if (data.success) toast.success(data.message);
       else toast.error(data.message);
     } catch (error) {
       toast.error("Something went wrong!");
+    } finally {
+      setLoading(false); // back to normal
     }
   };
 
@@ -28,8 +35,12 @@ const ForgotPassword = () => {
           className="border p-2 rounded"
           required
         />
-        <button type="submit" className="bg-black text-white py-2 rounded">
-          Send Reset Link
+        <button
+          type="submit"
+          className="bg-black text-white py-2 rounded disabled:opacity-50"
+          disabled={loading} // disable while sending
+        >
+          {loading ? "Sending..." : "Send Reset Link"}
         </button>
       </form>
     </div>

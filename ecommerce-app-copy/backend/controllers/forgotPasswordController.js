@@ -2,74 +2,82 @@ import nodemailer from "nodemailer";
 import userModel from "../models/userModel.js";
 import crypto from "crypto";
 
-// FORGOT PASSWORD
+// =========================
+// FORGOT PASSWORD CONTROLLER
+// =========================
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
+    // 1️⃣ Check if user exists
     const user = await userModel.findOne({ email });
-    if (!user) return res.json({ success: false, message: "User not found" });
+    if (!user)
+      return res.json({ success: false, message: "User not found" });
 
-    // Generate token
+    // 2️⃣ Generate reset token
     const token = crypto.randomBytes(20).toString("hex");
     user.resetPasswordToken = token;
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    user.resetPasswordExpires = Date.now() + 5 * 60 * 1000; // ⏱️ 5 minutes
     await user.save();
 
-    // Ethereal transporter (testing only)
+    // 3️⃣ Create Gmail transporter (using App Password)
     const transporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
+      service: "gmail",
       auth: {
-        user: "gkecjpehjo74hmlc@ethereal.email",
-        pass: "hmCPnS65J1J5aMzHnD",
+        user: process.env.EMAIL_USER, // Gmail address
+        pass: process.env.EMAIL_PASS, // Gmail App Password
       },
     });
 
+    // 4️⃣ Create reset link
     const resetUrl = `http://localhost:5173/reset-password/${token}`;
-    const message = `You requested a password reset. Click here: ${resetUrl}`;
+    const message = `
+      <p>You requested a password reset.</p>
+      <p>Click the link below to reset your password:</p>
+      <a href="${resetUrl}">${resetUrl}</a>
+      <p>This link will expire in 5 minutes.</p>
+    `;
 
-    const info = await transporter.sendMail({
-      from: '"Test App" <test@example.com>',
+    // 5️⃣ Send email
+    await transporter.sendMail({
+      from: `"Harsha Fashion" <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: "Reset Your Password",
-      text: message,
+      subject: "Password Reset Request",
+      html: message,
     });
 
-    console.log("Reset link (preview):", nodemailer.getTestMessageUrl(info));
-    console.log("Saved token:", token);
-
-    res.json({ success: true, message: "Reset link sent! Check terminal for URL." });
+    res.json({
+      success: true,
+      message: "Reset link sent to your email address!",
+    });
   } catch (error) {
     console.error("Forgot password error:", error);
     res.json({ success: false, message: "Failed to send reset email." });
   }
 };
 
-// RESET PASSWORD
+// =========================
+// RESET PASSWORD CONTROLLER
+// =========================
 export const resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
 
-    // Debug logs
-    console.log("Received token:", token);
-
-    // 1. Find user with valid token and not expired
+    // Find user with valid token
     const user = await userModel.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() },
     });
 
-    console.log("User found:", user);
+    if (!user)
+      return res.json({ success: false, message: "Invalid or expired token." });
 
-    if (!user) return res.json({ success: false, message: "Invalid or expired token." });
-
-    // 2. Hash new password
+    // Hash new password
     const bcrypt = await import("bcrypt");
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(password, salt);
 
-    // 3. Clear token fields
+    // Clear token fields
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
 
