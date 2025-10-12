@@ -38,8 +38,10 @@ const ForgotPassword = () => {
         />
         <button
           type="submit"
-          className="bg-black text-white py-2 rounded disabled:opacity-50"
-          disabled={loading} // disable while sending
+          className={`bg-black text-white py-2 rounded transition duration-200 ${
+            loading ? "opacity-60 cursor-not-allowed" : "hover:bg-gray-800"
+          }`}
+          disabled={loading}
         >
           {loading ? "Sending..." : "Send Reset Link"}
         </button>
