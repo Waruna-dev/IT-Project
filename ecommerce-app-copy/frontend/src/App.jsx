@@ -14,6 +14,9 @@ import Footer from './components/Footer'
 import SearchBar from './components/SearchBar'
 import { ToastContainer, toast } from 'react-toastify';
 import Verify from './pages/Verify.jsx'
+import Profile from './pages/Profile.jsx';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 //
 import ExchangeInfo from './pages/ExchangeInfo.jsx';
@@ -46,6 +49,9 @@ const App = () => {
         {/* ...other routes */}
         <Route path="/exchange-info" element={<ExchangeInfo />} />
         <Route path="/refund-info" element={<RefundInfo />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       </Routes>
       <Footer />

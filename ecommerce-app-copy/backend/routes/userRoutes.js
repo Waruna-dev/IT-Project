@@ -5,6 +5,11 @@ import roleAuth from '../middleware/adminAuth.js';
 import authUser from '../middleware/auth.js';
 //
 import authMiddleware from '../middleware/authMiddleware.js';
+import { fetchUserProfile, editUserProfile, deleteUserAccount  } from '../controllers/userProfileController.js';
+import verifyToken from "../middleware/verifyToken.js";
+import { forgotPassword, resetPassword } from '../controllers/forgotPasswordController.js';
+import { generateUserReport } from "../controllers/reportController.js";
+
 
 const userRouter =  express.Router()
 
@@ -27,5 +32,15 @@ userRouter.delete('/delete/:id', roleAuth('admin'), deleteUser);
 userRouter.get('/profile', authMiddleware, getProfile);
 userRouter.put('/profile', authMiddleware, updateProfile);
 
+// User profile routes
+userRouter.get('/profile', verifyToken, fetchUserProfile);
+userRouter.put('/profile', verifyToken, editUserProfile);
+userRouter.delete("/profile", verifyToken, deleteUserAccount);
+
+// Forgot Password routes
+userRouter.post('/forgot-password', forgotPassword);
+userRouter.post('/reset-password', resetPassword);
+
+userRouter.get("/report", generateUserReport);
 
 export default userRouter;
