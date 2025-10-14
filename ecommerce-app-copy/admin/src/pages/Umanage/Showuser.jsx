@@ -7,6 +7,7 @@ const Showuser = ({ token }) => {
   const [users, setUsers] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
 
+  // Fetch all users
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`${backendUrl}/api/user/list`, {
@@ -26,6 +27,7 @@ const Showuser = ({ token }) => {
     fetchUsers();
   }, []);
 
+  // Delete user
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
@@ -43,6 +45,7 @@ const Showuser = ({ token }) => {
     }
   };
 
+  // Update user
   const handleUpdate = async () => {
     try {
       const response = await axios.put(
@@ -62,10 +65,42 @@ const Showuser = ({ token }) => {
     }
   };
 
+  // ✅ Generate Report
+  const handleGenerateReport = async () => {
+    try {
+      const response = await axios.get(`${backendUrl}/api/user/report`, {
+        responseType: "blob", // important for file download
+        headers: { token },
+      });
+
+      // Create a temporary download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "Users_Report.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Report downloaded successfully!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to download report.");
+    }
+  };
+
   return (
     <div className="p-6 bg-white rounded-xl shadow-md">
       <h2 className="text-xl font-semibold mb-4">Manage Users</h2>
 
+      {/* ✅ Report Button */}
+      <button
+        onClick={handleGenerateReport}
+        className="bg-green-600 text-white px-4 py-2 rounded mb-4 hover:bg-green-700"
+      >
+        📄 Generate User Report
+      </button>
+
+      {/* User Table */}
       <table className="w-full border-collapse border">
         <thead>
           <tr className="bg-gray-100">
@@ -107,18 +142,24 @@ const Showuser = ({ token }) => {
           <input
             type="text"
             value={editingUser.name}
-            onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+            onChange={(e) =>
+              setEditingUser({ ...editingUser, name: e.target.value })
+            }
             className="border p-2 w-full mb-2 rounded"
           />
           <input
             type="email"
             value={editingUser.email}
-            onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+            onChange={(e) =>
+              setEditingUser({ ...editingUser, email: e.target.value })
+            }
             className="border p-2 w-full mb-2 rounded"
           />
           <select
             value={editingUser.role}
-            onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+            onChange={(e) =>
+              setEditingUser({ ...editingUser, role: e.target.value })
+            }
             className="border p-2 w-full mb-2 rounded"
           >
             <option value="customer">Customer</option>

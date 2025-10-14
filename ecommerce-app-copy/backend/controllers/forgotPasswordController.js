@@ -70,7 +70,7 @@ export const resetPassword = async (req, res) => {
     });
 
     if (!user)
-      return res.json({ success: false, message: "Invalid or expired token." });
+      return res.json({ success: false, message: "Invalid or expired link." });
 
     // Hash new password
     const bcrypt = await import("bcrypt");

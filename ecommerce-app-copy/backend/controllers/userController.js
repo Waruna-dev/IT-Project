@@ -1,99 +1,87 @@
 import userModel from "../models/userModel.js";
 import validator from "validator";
-import jwt from 'jsonwebtoken'
-import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import moment from "moment-timezone"; // for local time conversion
 
+// ---------------------- Helpers ----------------------
 
+// Create JWT token
 const createToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET)
-}
+    return jwt.sign({ id }, process.env.JWT_SECRET);
+};
 
+// Convert Date to Sri Lanka time string
+const convertToSriLankaTime = (date) => {
+    return date ? moment(date).tz("Asia/Colombo").format("YYYY-MM-DD HH:mm:ss") : null;
+};
 
-//route for user login  CHANGED back
+// ---------------------- User Login ----------------------
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Find the user by email
         const user = await userModel.findOne({ email });
-        if (!user) {
-            return res.json({ success: false, message: "User does not exist." });
-        }
+        if (!user) return res.json({ success: false, message: "User does not exist." });
+        if (user.role !== 'customer') return res.json({ success: false, message: "Only customers can login here." });
 
-        // Restrict login to customers only
-        if (user.role !== 'customer') {
-            return res.json({ success: false, message: "Only customers can login here." });
-        }
-
-        // Check password
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.json({ success: false, message: "Invalid credentials." });
-        }
+        if (!isMatch) return res.json({ success: false, message: "Invalid credentials." });
 
-        // Create token
+        // Update lastLogin
+        user.lastLogin = new Date();
+        await user.save();
+
         const token = createToken(user._id);
 
-        // Send response
-        res.json({ success: true, token, role: user.role });
+        res.json({
+            success: true,
+            token,
+            role: user.role,
+            lastLogin: convertToSriLankaTime(user.lastLogin),
+            createdAt: convertToSriLankaTime(user.createdAt)
+        });
 
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
     }
-}
+};
 
-//route for user register
+// ---------------------- User Register ----------------------
 const registerUser = async (req, res) => {
     try {
-
         const { name, email, password } = req.body;
 
-        //checking whether user already exist or not
-        const exists = await userModel.findOne({ email })
+        if (!validator.isEmail(email)) return res.json({ success: false, message: "Enter valid email." });
+        if (password.length < 8) return res.json({ success: false, message: "Password should be more than 8 characters." });
 
-        if (exists) {
-            return res.json({ success: false, message: "User already exists." })
-        }
+        const exists = await userModel.findOne({ email });
+        if (exists) return res.json({ success: false, message: "User already exists." });
 
-        //validating email format and strong password
-        if (!validator.isEmail(email)) {                  //if email is not valid
-            return res.json({ success: false, message: "Enter valid email." })
-        }
+        const salt = await bcrypt.genSalt(12);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-        if (password.length < 8) {                  //if pass. is not valid
-            return res.json({ success: false, message: "Password should be more than 8 characters." })
-        }
+        const newUser = new userModel({ name, email, password: hashedPassword });
+        newUser.lastLogin = new Date(); // Set lastLogin on registration
+        const user = await newUser.save();
 
-        //password hashing
-        const salt = await bcrypt.genSalt(12) //when number increasing it  takes more time to encrypt the pwd
-        const hashedPassword = await bcrypt.hash(password, salt)
+        const token = createToken(user._id);
 
-        const newUser = new userModel({
-            name,
-            email,
-            password: hashedPassword
-        })
-        //save the user in DB
-        const user = await newUser.save()
-
-        //create token when register using id
-
-        const token = createToken(user._id)
-
-        res.json({ success: true, token })
-
+        res.json({
+            success: true,
+            token,
+            lastLogin: convertToSriLankaTime(user.lastLogin),
+            createdAt: convertToSriLankaTime(user.createdAt)
+        });
 
     } catch (error) {
         console.log(error);
-        res.json({ success: false, message: error.message })
+        res.json({ success: false, message: error.message });
     }
-}
+};
 
-
-
-
-
+// ---------------------- Admin Login ----------------------
 //route for admin login
 
 // This is what you should have (based on the previous discussion)
@@ -130,147 +118,138 @@ const adminLogin = async (req, res) => {
 
 export default adminLogin;
 
-
-
-
-// Add this function alongside your other login controllers
+// ---------------------- Staff Login ----------------------
 const staffLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        // 1. Find the user by email
         const user = await userModel.findOne({ email });
 
-        // 2. Check if the user exists and has the 'staff' role
         if (!user || user.role !== 'staff') {
             return res.json({ success: false, message: 'Invalid credentials or not a staff member.' });
         }
 
-        // 3. Compare the provided password with the hashed password
         const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.json({ success: false, message: 'Invalid credentials.' });
 
-        if (isMatch) {
-            // 4. If passwords match, create a JWT token with the user's ID and role
-            const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
-            res.json({ success: true, token });
-        } else {
-            res.json({ success: false, message: 'Invalid credentials.' });
-        }
+        user.lastLogin = new Date();
+        await user.save();
+
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
+
+        res.json({
+            success: true,
+            token,
+            lastLogin: convertToSriLankaTime(user.lastLogin),
+            createdAt: convertToSriLankaTime(user.createdAt)
+        });
+
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: 'An error occurred during staff login.' });
     }
 };
 
-
-
+// ---------------------- Delivery Login ----------------------
 const deliveryLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await userModel.findOne({ email });
 
-        // Check if user exists and is delivery role
         if (!user || user.role !== 'delivery') {
             return res.json({ success: false, message: 'Invalid credentials or not a delivery member.' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch) {
-            const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-            res.json({ success: true, token });
-        } else {
-            res.json({ success: false, message: 'Invalid credentials.' });
-        }
+        if (!isMatch) return res.json({ success: false, message: 'Invalid credentials.' });
+
+        user.lastLogin = new Date();
+        await user.save();
+
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.json({
+            success: true,
+            token,
+            lastLogin: convertToSriLankaTime(user.lastLogin),
+            createdAt: convertToSriLankaTime(user.createdAt)
+        });
+
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: 'An error occurred during delivery login.' });
     }
 };
 
+// ---------------------- Add User ----------------------
+const addUser = async (req, res) => {
+    try {
+        const { name, email, password, role } = req.body;
+        const existingUser = await userModel.findOne({ email });
+        if (existingUser) return res.json({ success: false, message: 'Email already registered.' });
 
-//new added
- const addUser = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-    // check if already exists
-    const existingUser = await userModel.findOne({ email });
-    if (existingUser) {
-      return res.json({ success: false, message: 'Email already registered.' });
+        const newUser = new userModel({ name, email, password: hashedPassword, role });
+        await newUser.save();
+
+        res.json({ success: true, message: 'User added successfully.' });
+    } catch (error) {
+        console.error(error);
+        res.json({ success: false, message: 'Something went wrong.' });
     }
-
-    // hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // create user
-    const newUser = new userModel({
-      name,
-      email,
-      password: hashedPassword,
-      role
-    });
-
-    await newUser.save();
-    res.json({ success: true, message: 'User added successfully.' });
-  } catch (error) {
-    console.error(error);
-    res.json({ success: false, message: 'Something went wrong.' });
-  }
 };
 
-
-//////////////////////////
-// Get all users (admin only)
+// ---------------------- Get All Users ----------------------
 export const getAllUsers = async (req, res) => {
-  try {
-    const users = await userModel.find().select("-password"); // hide password
-    res.json({ success: true, users });
-  } catch (error) {
-    console.error(error);
-    res.json({ success: false, message: "Failed to fetch users." });
-  }
+    try {
+        const users = await userModel.find().select("-password");
+        const usersWithLocalTime = users.map(u => ({
+            ...u._doc,
+            lastLogin: u.lastLogin ? convertToSriLankaTime(u.lastLogin) : null,
+            createdAt: u.createdAt ? convertToSriLankaTime(u.createdAt) : null
+        }));
+        res.json({ success: true, users: usersWithLocalTime });
+    } catch (error) {
+        console.error(error);
+        res.json({ success: false, message: "Failed to fetch users." });
+    }
 };
 
-// Update user
+// ---------------------- Update User ----------------------
 export const updateUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, email, role } = req.body;
+    try {
+        const { id } = req.params;
+        const { name, email, role } = req.body;
 
-    const updatedUser = await userModel.findByIdAndUpdate(
-      id,
-      { name, email, role },
-      { new: true }
-    ).select("-password");
+        const updatedUser = await userModel.findByIdAndUpdate(
+            id,
+            { name, email, role },
+            { new: true }
+        ).select("-password");
 
-    if (!updatedUser) {
-      return res.json({ success: false, message: "User not found." });
+        if (!updatedUser) return res.json({ success: false, message: "User not found." });
+
+        res.json({ success: true, message: "User updated successfully.", user: updatedUser });
+    } catch (error) {
+        console.error(error);
+        res.json({ success: false, message: "Failed to update user." });
     }
-
-    res.json({ success: true, message: "User updated successfully.", user: updatedUser });
-  } catch (error) {
-    console.error(error);
-    res.json({ success: false, message: "Failed to update user." });
-  }
 };
 
-// Delete user
+// ---------------------- Delete User ----------------------
 export const deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
+        const deletedUser = await userModel.findByIdAndDelete(id);
 
-    const deletedUser = await userModel.findByIdAndDelete(id);
-    if (!deletedUser) {
-      return res.json({ success: false, message: "User not found." });
+        if (!deletedUser) return res.json({ success: false, message: "User not found." });
+
+        res.json({ success: true, message: "User deleted successfully." });
+    } catch (error) {
+        console.error(error);
+        res.json({ success: false, message: "Failed to delete user." });
     }
-
-    res.json({ success: true, message: "User deleted successfully." });
-  } catch (error) {
-    console.error(error);
-    res.json({ success: false, message: "Failed to delete user." });
-  }
 };
 
-
-export { loginUser, registerUser, adminLogin, staffLogin, deliveryLogin, addUser }
+export { loginUser, registerUser, adminLogin, staffLogin, deliveryLogin, addUser };

@@ -8,6 +8,7 @@ import authMiddleware from '../middleware/authMiddleware.js';
 import { fetchUserProfile, editUserProfile, deleteUserAccount  } from '../controllers/userProfileController.js';
 import verifyToken from "../middleware/verifyToken.js";
 import { forgotPassword, resetPassword } from '../controllers/forgotPasswordController.js';
+import { generateUserReport } from "../controllers/reportController.js";
 
 
 const userRouter =  express.Router()
@@ -40,5 +41,6 @@ userRouter.delete("/profile", verifyToken, deleteUserAccount);
 userRouter.post('/forgot-password', forgotPassword);
 userRouter.post('/reset-password', resetPassword);
 
+userRouter.get("/report", generateUserReport);
 
 export default userRouter;
