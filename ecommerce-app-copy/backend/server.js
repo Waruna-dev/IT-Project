@@ -12,6 +12,9 @@ import requestRouter from './routes/requestRoutes.js'; // Import the new router
 //
 import feedbackRoute from "./routes/feedbackRoute.js";// Import the new router
 import userRoutes from "./routes/userRoutes.js";
+import paymentRouter from "./routes/paymentRoutes.js"
+
+
 
 //app config
 const app = express()
@@ -65,6 +68,8 @@ app.use('/api', requestRouter); // Add the new router here
 
 app.use("/api/feedback", feedbackRoute);// Use the new feedback router
 app.use("/api/user", userRoutes);
+app.use('/api/payment', paymentRouter)
+
 
 //api endpoints
 app.get('/', (req, res) => {
