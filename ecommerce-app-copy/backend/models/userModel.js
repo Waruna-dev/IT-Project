@@ -2,11 +2,10 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    // Basic details
     name: {
       type: String,
       required: true,
-      trim: true, // removes spaces
+      trim: true,
     },
     email: {
       type: String,
@@ -19,31 +18,23 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-
-    // User-specific data
     cartData: {
       type: Object,
       default: {},
     },
-
-    // Role-based access
     role: {
       type: String,
       enum: ["customer", "staff", "owner", "delivery", "admin"],
       default: "customer",
     },
-
-    // Password reset management
     resetPasswordToken: {
       type: String,
     },
     resetPasswordExpires: {
       type: Date,
     },
-
-    // Activity tracking (for reporting)
     lastLogin: {
-      type: Date, // updated every time user logs in
+      type: Date,
     },
     isActive: {
       type: Boolean,
@@ -51,13 +42,29 @@ const userSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // adds createdAt and updatedAt automatically
-    minimize: false,  // ensures empty objects are saved as {}
+    timestamps: true,
+    minimize: false,
   }
 );
 
+// ----- STATIC METHOD: Update each user's isActive based on lastLogin -----
+userSchema.statics.updateIsActiveBasedOnLastLogin = async function () {
+  const users = await this.find(); // get all users
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-const userModel =
-  mongoose.models.user || mongoose.model("user", userSchema);
+  for (const user of users) {
+    if (user.lastLogin && user.lastLogin > oneWeekAgo) {
+      user.isActive = true;
+    } else {
+      user.isActive = false;
+    }
+    await user.save();
+  }
+
+  console.log("All users' isActive status updated based on lastLogin.");
+};
+
+const userModel = mongoose.models.user || mongoose.model("user", userSchema);
 
 export default userModel;

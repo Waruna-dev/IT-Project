@@ -12,8 +12,9 @@ import requestRouter from './routes/requestRoutes.js'; // Import the new router
 //
 import feedbackRoute from "./routes/feedbackRoute.js";// Import the new router
 import userRoutes from "./routes/userRoutes.js";
-import paymentRouter from "./routes/paymentRoutes.js"
-
+import userModel from "./models/userModel.js";
+=======
+import paymentRouter from "./routes/paymentRoutes.j
 
 
 //app config
@@ -85,3 +86,6 @@ app.listen(port, () => console.log('Server started on PORT : ' + port))
 //npm install mongodb
 
 
+
+  // Update users’ isActive status on server start
+  await userModel.updateIsActiveBasedOnLastLogin();

@@ -1,15 +1,16 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom"; // Added useNavigate
 import axios from "axios";
 import { toast } from "react-toastify";
 
 const ResetPassword = () => {
   const { token } = useParams();
+  const navigate = useNavigate(); // for redirecting
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordStrength, setPasswordStrength] = useState("");
 
-  //  Check password strength (live)
+  // Check password strength (live)
   const checkPasswordStrength = (value) => {
     const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
     const mediumRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
@@ -22,7 +23,7 @@ const ResetPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    //  Password strength & match validation
+    // Password strength & match validation
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
     if (!passwordRegex.test(password)) {
       toast.error(
@@ -42,8 +43,12 @@ const ResetPassword = () => {
         password,
       });
 
-      if (data.success) toast.success(data.message);
-      else toast.error(data.message);
+      if (data.success) {
+        toast.success("Password reset successful! Redirecting to login...");
+        setTimeout(() => navigate("/login"), 2500); // Redirect after 2.5 seconds
+      } else {
+        toast.error(data.message);
+      }
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong!");
@@ -68,7 +73,6 @@ const ResetPassword = () => {
             className="border p-2 rounded w-full"
             required
           />
-          {/* Password Strength Indicator */}
           {password && (
             <p
               className={`text-sm mt-1 ${
