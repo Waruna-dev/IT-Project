@@ -1,19 +1,41 @@
 // admin/pages/staff/Refund.jsx
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
-// Import the backendUrl directly from App.jsx's constants
-import { backendUrl } from '../../App.jsx';
+import { backendUrl } from "../../App.jsx"; // Import backend URL
 
 const Refund = ({ token }) => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  //  Stats
+  const [refundCount, setRefundCount] = useState(0);
+  const [paymentCount, setPaymentCount] = useState(0);
+  const [totalAmount, setTotalAmount] = useState(0);
+
+  //  Fetch dashboard stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get(`${backendUrl}/api/dashboard/stats`, {
+          headers: { token },
+        });
+        if (res.data.success) {
+          setRefundCount(res.data.data.refundCount);
+          setPaymentCount(res.data.data.paymentCount);
+          setTotalAmount(res.data.data.totalAmount);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard stats:", error);
+      }
+    };
+
+    if (token) fetchStats();
+  }, [token]);
+
+  //  Fetch refund requests
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        // Use the backendUrl and token from the component's scope
         const res = await axios.get(`${backendUrl}/api/refund/list`, {
           headers: { token },
         });
@@ -27,22 +49,36 @@ const Refund = ({ token }) => {
       }
     };
 
-    // Only fetch data if a token exists
     if (token) {
       fetchRequests();
     } else {
       setLoading(false);
     }
-  }, [token]); // Dependency array to refetch if token changes
+  }, [token]);
 
-  // ADDED: Function to handle the removal of a refund request
+  //  Remove a refund request
   const handleRemoveRequest = async (id) => {
     try {
-      const res = await axios.post(`${backendUrl}/api/refund/remove`, { id }, { headers: { token } });
+      const res = await axios.post(
+        `${backendUrl}/api/refund/remove`,
+        { id },
+        { headers: { token } }
+      );
+
       if (res.data.success) {
-        // Update the state to remove the item without a full page reload
-        setRequests(requests.filter(req => req._id !== id));
+        // Remove from UI
+        setRequests((prev) => prev.filter((req) => req._id !== id));
         console.log("Refund request removed successfully.");
+
+        // Refresh dashboard stats
+        const statsRes = await axios.get(`${backendUrl}/api/dashboard/stats`, {
+          headers: { token },
+        });
+        if (statsRes.data.success) {
+          setRefundCount(statsRes.data.data.refundCount);
+          setPaymentCount(statsRes.data.data.paymentCount);
+          setTotalAmount(statsRes.data.data.totalAmount);
+        }
       } else {
         console.error("Failed to remove refund request:", res.data.message);
       }
@@ -54,12 +90,29 @@ const Refund = ({ token }) => {
   if (loading) return <p>Loading refund requests...</p>;
 
   return (
-    <div>
-      <h1 className="text-xl font-bold mb-4">Refund Requests</h1>
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-6">Refund Requests</h1>
+
+      {/*  STATS OVERVIEW */}
+      <div className="flex flex-wrap gap-4 mb-6">
+        <div className="bg-blue-100 text-blue-800 p-4 rounded-md shadow-sm w-40 text-center">
+          <p className="text-sm">Total Payments</p>
+          <p className="text-lg font-bold">{paymentCount}</p>
+        </div>
+        <div className="bg-green-100 text-green-800 p-4 rounded-md shadow-sm w-40 text-center">
+          <p className="text-sm">Total Refunds</p>
+          <p className="text-lg font-bold">{refundCount}</p>
+        </div>
+        <div className="bg-yellow-100 text-yellow-800 p-4 rounded-md shadow-sm w-48 text-center">
+          <p className="text-sm">Total Payment Amount</p>
+          <p className="text-lg font-bold">LKR{totalAmount}</p>
+        </div>
+      </div>
+
+      {/*  REFUND TABLE */}
       {requests.length === 0 ? (
         <p>No refund requests found.</p>
       ) : (
-        // Added responsive classes: `overflow-x-auto` on mobile, `md:table` on medium screens
         <div className="w-full overflow-x-auto md:table">
           <div className="hidden md:table-header-group">
             <div className="table-row bg-gray-100 text-gray-600 font-semibold text-left">
@@ -71,63 +124,73 @@ const Refund = ({ token }) => {
               <div className="table-cell p-3 border border-gray-400">Refund Method</div>
               <div className="table-cell p-3 border border-gray-400">Address</div>
               <div className="table-cell p-3 border border-gray-400">Contact</div>
-              {/* ADDED: New header for the remove button */}
               <div className="table-cell p-3 border border-gray-400">Action</div>
             </div>
           </div>
+
           <div className="md:table-row-group">
             {requests.map((req) => (
-              // Each row is a card on mobile and a table row on medium screens
-              <div key={req._id} className="border border-gray-400 mb-4 p-4 md:p-0 md:mb-0 md:table-row text-gray-600">
-                {/* Image Cell */}
+              <div
+                key={req._id}
+                className="border border-gray-400 mb-4 p-4 md:p-0 md:mb-0 md:table-row text-gray-600"
+              >
+                {/* Image */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Image:</span>
                   {req.orderItem?.image ? (
-                    <img 
-                      src={req.orderItem.image[0]} 
-                      alt={req.orderItem?.name || 'Product Image'} 
-                      className="w-16 h-16 object-cover" 
+                    <img
+                      src={req.orderItem.image[0]}
+                      alt={req.orderItem?.name || "Product"}
+                      className="w-16 h-16 object-cover"
                     />
                   ) : (
                     "N/A"
                   )}
                 </div>
-                {/* User Cell */}
+
+                {/* User */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">User:</span>
                   {req.email}
                 </div>
-                {/* Product Cell */}
+
+                {/* Product */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Product:</span>
                   {req.orderItem?.name || "N/A"}
                 </div>
-                {/* Reason Cell */}
+
+                {/* Reason */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Reason:</span>
                   {req.reason}
                 </div>
-                {/* Quantity Cell */}
+
+                {/* Quantity */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Quantity:</span>
                   {req.quantity}
                 </div>
-                {/* Refund Method Cell */}
+
+                {/* Refund Method */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Refund Method:</span>
                   {req.refundMethod}
                 </div>
-                {/* Address Cell */}
+
+                {/* Address */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Address:</span>
                   {req.address}
                 </div>
-                {/* Contact Cell */}
+
+                {/* Contact */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Contact:</span>
                   {req.phone}
                 </div>
-                {/* ADDED: New cell for the remove button */}
+
+                {/* Remove Button */}
                 <div className="flex items-center gap-2 mt-2 md:mt-0 md:table-cell md:p-3 md:border md:border-gray-400">
                   <button
                     onClick={() => handleRemoveRequest(req._id)}

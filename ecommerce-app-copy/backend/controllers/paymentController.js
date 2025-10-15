@@ -1,7 +1,7 @@
 import Payment from "../models/paymentModel.js";
 import jwt from "jsonwebtoken";
 
-// ✅ Create new payment and receipt
+// Create new payment and receipt
 export const createPayment = async (req, res) => {
   try {
     const { orderId, amount, paymentMethod, transactionId } = req.body;
@@ -29,7 +29,7 @@ export const createPayment = async (req, res) => {
   }
 };
 
-// ✅ Get receipt details by transaction ID
+// Get receipt details by transaction ID
 export const getReceipt = async (req, res) => {
   try {
     const { transactionId } = req.params;

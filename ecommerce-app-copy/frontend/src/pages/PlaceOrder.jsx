@@ -29,7 +29,7 @@ const PlaceOrder = () => {
     setFormData(data => ({ ...data, [name]: value }));
   };
 
-  // ✅ Generate and download receipt PDF
+  // Generate and download receipt PDF
   const generateReceipt = (orderData) => {
   const doc = new jsPDF();
 
@@ -58,35 +58,35 @@ const PlaceOrder = () => {
   });
 
   doc.text("------------------------------------------------------", 14, y + 5);
-  doc.text(`Subtotal: $${getCartAmount().toFixed(2)}`, 14, y + 15);
-  doc.text(`Delivery Fee: $${delivery_fee.toFixed(2)}`, 14, y + 22);
-  doc.text(`Total Amount: $${orderData.amount.toFixed(2)}`, 14, y + 29);
+  doc.text(`Subtotal: LKR${getCartAmount().toFixed(2)}`, 14, y + 15);
+  doc.text(`Delivery Fee: LKR${delivery_fee.toFixed(2)}`, 14, y + 22);
+  doc.text(`Total Amount: LKR${orderData.amount.toFixed(2)}`, 14, y + 29);
   doc.text(`Payment Method: ${method.toUpperCase()}`, 14, y + 36);
 
   doc.text("------------------------------------------------------", 14, y + 43);
   doc.text("Thank you for shopping with us!", 75, y + 53);
 
-  // ✅ Download the file
+  // Download the file
   doc.save("Payment_Receipt.pdf");
 };
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
 
-    // ✅ VALIDATION 1: Ensure cart not empty
+    // VALIDATION 1: Ensure cart not empty
     if (Object.keys(cartItems).length === 0 || getCartAmount() === 0) {
       toast.error("Your cart is empty. Please add items to place an order.");
       return;
     }
 
-    // ✅ VALIDATION 2: Phone number format
+    // VALIDATION 2: Phone number format
     const phoneRegex = /^\d{10,15}$/;
     if (!phoneRegex.test(formData.phone)) {
       toast.error("Please enter a valid phone number (10-15 digits).");
       return;
     }
 
-    // ✅ VALIDATION 3: Check all required fields
+    //  VALIDATION 3: Check all required fields
     const requiredFields = ['firstName', 'lastName', 'email', 'street', 'city', 'state', 'zipcode', 'country', 'phone'];
     for (const field of requiredFields) {
       if (!formData[field]) {
@@ -117,7 +117,7 @@ const PlaceOrder = () => {
         amount: getCartAmount() + delivery_fee
       };
 
-      // ✅ Handle order placement and receipt generation
+      //  Handle order placement and receipt generation
       switch (method) {
         // CASE 1: CASH ON DELIVERY
         case 'cod': {
