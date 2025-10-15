@@ -207,21 +207,44 @@ const addUser = async (req, res) => {
     }
 };
 
-// ---------------------- Get All Users ----------------------
+// ---------------------- Get All Users with Search ----------------------
 export const getAllUsers = async (req, res) => {
-    try {
-        const users = await userModel.find().select("-password");
-        const usersWithLocalTime = users.map(u => ({
-            ...u._doc,
-            lastLogin: u.lastLogin ? convertToSriLankaTime(u.lastLogin) : null,
-            createdAt: u.createdAt ? convertToSriLankaTime(u.createdAt) : null
-        }));
-        res.json({ success: true, users: usersWithLocalTime });
-    } catch (error) {
-        console.error(error);
-        res.json({ success: false, message: "Failed to fetch users." });
+  try {
+    const { search } = req.query; // e.g. /api/user?search=john
+
+    // Step 1: Build a search condition (case-insensitive)
+    let query = {};
+    if (search) {
+      query = {
+        $or: [
+          { name: { $regex: search, $options: "i" } },   // match name
+          { email: { $regex: search, $options: "i" } },  // match email
+          { role: { $regex: search, $options: "i" } },   // match role
+        ],
+      };
     }
+
+    // Step 2: Fetch filtered users
+    const users = await userModel.find(query).select("-password");
+
+    // Step 3: Convert times to Sri Lanka time
+    const usersWithLocalTime = users.map((u) => ({
+      ...u._doc,
+      lastLogin: u.lastLogin
+        ? convertToSriLankaTime(u.lastLogin)
+        : null,
+      createdAt: u.createdAt
+        ? convertToSriLankaTime(u.createdAt)
+        : null,
+    }));
+
+    res.json({ success: true, users: usersWithLocalTime });
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: "Failed to fetch users." });
+  }
 };
+
 
 // ---------------------- Update User ----------------------
 export const updateUser = async (req, res) => {

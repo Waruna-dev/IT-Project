@@ -2,17 +2,25 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { backendUrl } from "../../App";
+import debounce from "lodash.debounce";
 
 const Showuser = ({ token }) => {
   const [users, setUsers] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
 
-  // Fetch all users
+  // ✅ Fetch all or filtered users
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`${backendUrl}/api/user/list`, {
         headers: { token },
+        params: {
+          search: searchTerm,
+          role: filterRole,
+        },
       });
+
       if (response.data.success) {
         setUsers(response.data.users);
       } else {
@@ -23,11 +31,22 @@ const Showuser = ({ token }) => {
     }
   };
 
+  // 🔁 Fetch users when search/filter changes (with debounce)
+  useEffect(() => {
+    const delayedFetch = debounce(() => {
+      fetchUsers();
+    }, 400); // 400ms delay for smooth searching
+
+    delayedFetch();
+    return delayedFetch.cancel;
+  }, [searchTerm, filterRole]);
+
+  // 📦 Initial fetch
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // Delete user
+  // 🗑 Delete user
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
@@ -45,7 +64,7 @@ const Showuser = ({ token }) => {
     }
   };
 
-  // Update user
+  // ✏️ Update user
   const handleUpdate = async () => {
     try {
       const response = await axios.put(
@@ -65,15 +84,13 @@ const Showuser = ({ token }) => {
     }
   };
 
-  // ✅ Generate Report
+  // 📄 Generate PDF report
   const handleGenerateReport = async () => {
     try {
       const response = await axios.get(`${backendUrl}/api/user/report`, {
-        responseType: "blob", // important for file download
+        responseType: "blob",
         headers: { token },
       });
-
-      // Create a temporary download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -92,15 +109,25 @@ const Showuser = ({ token }) => {
     <div className="p-6 bg-white rounded-xl shadow-md">
       <h2 className="text-xl font-semibold mb-4">Manage Users</h2>
 
-      {/* ✅ Report Button */}
-      <button
-        onClick={handleGenerateReport}
-        className="bg-green-600 text-white px-4 py-2 rounded mb-4 hover:bg-green-700"
-      >
-        📄 Generate User Report
-      </button>
+      {/* 🔍 Search + Filter Controls */}
+      <div className="flex flex-wrap gap-3 mb-4 items-center">
+        <input
+          type="text"
+          placeholder="Search by name or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border p-2 rounded w-64"
+        />
 
-      {/* User Table */}
+        <button
+          onClick={handleGenerateReport}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          📄 Generate Report
+        </button>
+      </div>
+
+      {/* 🧾 User Table */}
       <table className="w-full border-collapse border">
         <thead>
           <tr className="bg-gray-100">
@@ -111,61 +138,64 @@ const Showuser = ({ token }) => {
           </tr>
         </thead>
         <tbody>
-          {users.map((u) => (
-            <tr key={u._id} className="border">
-              <td className="p-2">{u.name}</td>
-              <td className="p-2">{u.email}</td>
-              <td className="p-2">{u.role}</td>
-              <td className="p-2 flex gap-2">
-                <button
-                  onClick={() => setEditingUser(u)}
-                  className="bg-yellow-500 text-white px-3 py-1 rounded"
-                >
-                  Update
-                </button>
-                <button
-                  onClick={() => handleDelete(u._id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Delete
-                </button>
+          {users.length > 0 ? (
+            users.map((u) => (
+              <tr key={u._id} className="border">
+                <td className="p-2">{u.name}</td>
+                <td className="p-2">{u.email}</td>
+                <td className="p-2 capitalize">{u.role}</td>
+                <td className="p-2 flex gap-2">
+                  <button
+                    onClick={() => setEditingUser(u)}
+                    className="bg-yellow-500 text-white px-3 py-1 rounded"
+                  >
+                    Update
+                  </button>
+                  <button
+                    onClick={() => handleDelete(u._id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="4" className="text-center py-4 text-gray-500">
+                No users found.
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
 
-      {/* Edit Form */}
+      {/* ✏️ Edit Form */}
       {editingUser && (
         <div className="mt-6 p-4 border rounded bg-gray-50">
           <h3 className="text-lg mb-3">Update User</h3>
           <input
             type="text"
             value={editingUser.name}
-            onChange={(e) =>
-              setEditingUser({ ...editingUser, name: e.target.value })
-            }
+            onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
             className="border p-2 w-full mb-2 rounded"
           />
           <input
             type="email"
             value={editingUser.email}
-            onChange={(e) =>
-              setEditingUser({ ...editingUser, email: e.target.value })
-            }
+            onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
             className="border p-2 w-full mb-2 rounded"
           />
           <select
             value={editingUser.role}
-            onChange={(e) =>
-              setEditingUser({ ...editingUser, role: e.target.value })
-            }
+            onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
             className="border p-2 w-full mb-2 rounded"
           >
             <option value="customer">Customer</option>
             <option value="staff">Staff</option>
             <option value="delivery">Delivery</option>
             <option value="owner">Owner</option>
+            <option value="admin">Admin</option>
           </select>
           <div className="flex gap-2">
             <button
