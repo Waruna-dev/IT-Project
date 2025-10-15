@@ -13,7 +13,6 @@ const Refund = ({ token }) => {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        // Use the backendUrl and token from the component's scope
         const res = await axios.get(`${backendUrl}/api/refund/list`, {
           headers: { token },
         });
@@ -27,20 +26,17 @@ const Refund = ({ token }) => {
       }
     };
 
-    // Only fetch data if a token exists
     if (token) {
       fetchRequests();
     } else {
       setLoading(false);
     }
-  }, [token]); // Dependency array to refetch if token changes
+  }, [token]);
 
-  // ADDED: Function to handle the removal of a refund request
   const handleRemoveRequest = async (id) => {
     try {
       const res = await axios.post(`${backendUrl}/api/refund/remove`, { id }, { headers: { token } });
       if (res.data.success) {
-        // Update the state to remove the item without a full page reload
         setRequests(requests.filter(req => req._id !== id));
         console.log("Refund request removed successfully.");
       } else {
@@ -56,10 +52,16 @@ const Refund = ({ token }) => {
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Refund Requests</h1>
+
+      {/*  Total Refund Count Box */}
+<div className="bg-gradient-to-r from-pink-500 to-orange-500 text-white p-6 rounded-2xl shadow-lg mb-6 w-fit">
+  <h2 className="text-lg font-semibold">Total Refund Requests</h2>
+  <p className="text-3xl font-bold mt-2">{requests.length}</p>
+</div>
+
       {requests.length === 0 ? (
         <p>No refund requests found.</p>
       ) : (
-        // Added responsive classes: `overflow-x-auto` on mobile, `md:table` on medium screens
         <div className="w-full overflow-x-auto md:table">
           <div className="hidden md:table-header-group">
             <div className="table-row bg-gray-100 text-gray-600 font-semibold text-left">
@@ -71,15 +73,12 @@ const Refund = ({ token }) => {
               <div className="table-cell p-3 border border-gray-400">Refund Method</div>
               <div className="table-cell p-3 border border-gray-400">Address</div>
               <div className="table-cell p-3 border border-gray-400">Contact</div>
-              {/* ADDED: New header for the remove button */}
               <div className="table-cell p-3 border border-gray-400">Action</div>
             </div>
           </div>
           <div className="md:table-row-group">
             {requests.map((req) => (
-              // Each row is a card on mobile and a table row on medium screens
               <div key={req._id} className="border border-gray-400 mb-4 p-4 md:p-0 md:mb-0 md:table-row text-gray-600">
-                {/* Image Cell */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Image:</span>
                   {req.orderItem?.image ? (
@@ -92,42 +91,34 @@ const Refund = ({ token }) => {
                     "N/A"
                   )}
                 </div>
-                {/* User Cell */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">User:</span>
                   {req.email}
                 </div>
-                {/* Product Cell */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Product:</span>
                   {req.orderItem?.name || "N/A"}
                 </div>
-                {/* Reason Cell */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Reason:</span>
                   {req.reason}
                 </div>
-                {/* Quantity Cell */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Quantity:</span>
                   {req.quantity}
                 </div>
-                {/* Refund Method Cell */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Refund Method:</span>
                   {req.refundMethod}
                 </div>
-                {/* Address Cell */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Address:</span>
                   {req.address}
                 </div>
-                {/* Contact Cell */}
                 <div className="flex items-center gap-2 mb-2 md:table-cell md:p-3 md:border md:border-gray-400">
                   <span className="font-semibold md:hidden">Contact:</span>
                   {req.phone}
                 </div>
-                {/* ADDED: New cell for the remove button */}
                 <div className="flex items-center gap-2 mt-2 md:mt-0 md:table-cell md:p-3 md:border md:border-gray-400">
                   <button
                     onClick={() => handleRemoveRequest(req._id)}
@@ -145,4 +136,4 @@ const Refund = ({ token }) => {
   );
 };
 
-export default Refund;
+export default Refund;
