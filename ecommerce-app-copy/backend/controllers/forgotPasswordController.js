@@ -9,18 +9,18 @@ export const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    // 1️⃣ Check if user exists
+    // Check if user exists
     const user = await userModel.findOne({ email });
     if (!user)
       return res.json({ success: false, message: "User not found" });
 
-    // 2️⃣ Generate reset token
+    // Generate reset token
     const token = crypto.randomBytes(20).toString("hex");
     user.resetPasswordToken = token;
     user.resetPasswordExpires = Date.now() + 5 * 60 * 1000; // ⏱️ 5 minutes
     await user.save();
 
-    // 3️⃣ Create Gmail transporter (using App Password)
+    // Create Gmail transporter (using App Password)
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -29,7 +29,7 @@ export const forgotPassword = async (req, res) => {
       },
     });
 
-    // 4️⃣ Create reset link
+    // Create reset link
     const resetUrl = `http://localhost:5173/reset-password/${token}`;
     const message = `
       <p>You requested a password reset.</p>
@@ -38,7 +38,7 @@ export const forgotPassword = async (req, res) => {
       <p>This link will expire in 5 minutes.</p>
     `;
 
-    // 5️⃣ Send email
+    // Send email
     await transporter.sendMail({
       from: `"Harsha Fashion" <${process.env.EMAIL_USER}>`,
       to: user.email,

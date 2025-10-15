@@ -10,7 +10,7 @@ const Showuser = ({ token }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
 
-  // ✅ Fetch all or filtered users
+  // Fetch all or filtered users
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`${backendUrl}/api/user/list`, {
@@ -31,7 +31,7 @@ const Showuser = ({ token }) => {
     }
   };
 
-  // 🔁 Fetch users when search/filter changes (with debounce)
+  // Fetch users when search/filter changes (with debounce)
   useEffect(() => {
     const delayedFetch = debounce(() => {
       fetchUsers();
@@ -41,7 +41,7 @@ const Showuser = ({ token }) => {
     return delayedFetch.cancel;
   }, [searchTerm, filterRole]);
 
-  // 📦 Initial fetch
+  // Initial fetch
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -64,7 +64,7 @@ const Showuser = ({ token }) => {
     }
   };
 
-  // ✏️ Update user
+  //  Update user
   const handleUpdate = async () => {
     try {
       const response = await axios.put(
@@ -84,7 +84,7 @@ const Showuser = ({ token }) => {
     }
   };
 
-  // 📄 Generate PDF report
+  //  Generate PDF report
   const handleGenerateReport = async () => {
     try {
       const response = await axios.get(`${backendUrl}/api/user/report`, {
@@ -109,7 +109,7 @@ const Showuser = ({ token }) => {
     <div className="p-6 bg-white rounded-xl shadow-md">
       <h2 className="text-xl font-semibold mb-4">Manage Users</h2>
 
-      {/* 🔍 Search + Filter Controls */}
+      {/*  Search + Filter Controls */}
       <div className="flex flex-wrap gap-3 mb-4 items-center">
         <input
           type="text"
@@ -127,7 +127,7 @@ const Showuser = ({ token }) => {
         </button>
       </div>
 
-      {/* 🧾 User Table */}
+      {/*  User Table */}
       <table className="w-full border-collapse border">
         <thead>
           <tr className="bg-gray-100">
@@ -170,7 +170,7 @@ const Showuser = ({ token }) => {
         </tbody>
       </table>
 
-      {/* ✏️ Edit Form */}
+      {/*  Edit Form */}
       {editingUser && (
         <div className="mt-6 p-4 border rounded bg-gray-50">
           <h3 className="text-lg mb-3">Update User</h3>
