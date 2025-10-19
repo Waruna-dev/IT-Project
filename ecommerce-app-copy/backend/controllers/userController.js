@@ -2,9 +2,8 @@ import userModel from "../models/userModel.js";
 import validator from "validator";
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import moment from "moment-timezone"; // for local time conversion
+import moment from "moment-timezone"; //local time conversion
 
-// ---------------------- Helpers ----------------------
 
 // Create JWT token
 const createToken = (id) => {
@@ -86,30 +85,30 @@ const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1️⃣ Find the user by email and role
+    // Find the user by email and role
     const user = await userModel.findOne({ email });
     if (!user || user.role !== 'admin') {
       return res.json({ success: false, message: 'Invalid credentials or not an admin.' });
     }
 
-    // 2️⃣ Compare passwords
+    // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.json({ success: false, message: 'Invalid credentials.' });
     }
 
-    // 3️⃣ Update last login and save
+    // Update last login and save
     user.lastLogin = new Date();
     await user.save();
 
-    // 4️⃣ Create token
+    // Create token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '3h' }
     );
 
-    // 5️⃣ Respond once
+    // Respond once
     res.json({
       success: true,
       token,
