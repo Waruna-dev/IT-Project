@@ -5,6 +5,8 @@ Built with modern web technologies and best practices, focusing on scalability, 
 
 ---
 
+![Web Preview](frontend/Harsha.jpg)
+
 # 🌐 Live Features Overview
 
 **👤 User Features**
