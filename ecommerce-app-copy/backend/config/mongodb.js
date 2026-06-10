@@ -39,7 +39,8 @@ const connectDB = async () => {
         });
     };
 
-    if (atlasUri) {
+    const useAtlas = String(process.env.MONGODB_USE_ATLAS ?? 'true').toLowerCase() === 'true';
+    if (atlasUri && useAtlas) {
         try {
             console.log('Trying MongoDB Atlas:', atlasUri);
             await connectWithUri(atlasUri);
@@ -48,6 +49,10 @@ const connectDB = async () => {
         } catch (atlasError) {
             console.warn('Atlas connection failed:', atlasError.message || atlasError);
         }
+    }
+
+    if (atlasUri && !useAtlas) {
+        console.log('Skipping MongoDB Atlas because MONGODB_USE_ATLAS is set to false');
     }
 
     try {

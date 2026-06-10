@@ -3,6 +3,7 @@ import cors from 'cors'
 import 'dotenv/config'
 import connectDB from './config/mongodb.js'
 import connectClodinary from './config/cloudinary.js'
+import { seedIfEmpty } from './config/seed.js'
 import userRouter from './routes/userRoutes.js'
 import productRouter from './routes/productRoute.js'
 import { GoogleGenerativeAI } from '@google/generative-ai'
@@ -27,8 +28,12 @@ app.use(cors()) //can access the backend from any  ip
 
 const startApp = async () => {
     try {
-        await connectDB();
-        await connectClodinary();
+          await connectDB();
+          await connectClodinary();
+          // Seed sample data in development when DB is empty
+          if (process.env.NODE_ENV !== 'production') {
+               await seedIfEmpty();
+          }
         app.listen(port, () => console.log('Server started on PORT : ' + port));
     } catch (error) {
         console.error('Startup failed:', error.message || error);
