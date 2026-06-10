@@ -24,8 +24,19 @@ const port = process.env.PORT || 4000
 //middleware
 app.use(express.json())  //requests are passed using by json
 app.use(cors()) //can access the backend from any  ip
-connectDB();
-connectClodinary();
+
+const startApp = async () => {
+    try {
+        await connectDB();
+        await connectClodinary();
+        app.listen(port, () => console.log('Server started on PORT : ' + port));
+    } catch (error) {
+        console.error('Startup failed:', error.message || error);
+        process.exit(1);
+    }
+};
+
+startApp();
 
 
 // ...ai
