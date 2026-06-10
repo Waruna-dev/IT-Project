@@ -29,18 +29,20 @@ const connectDB = async () => {
     const atlasUri = rawUri ? appendDatabase(rawUri, dbName) : null;
     const localUri = `mongodb://127.0.0.1:27017/${dbName}`;
 
-    mongoose.connection.on('connected', () => {
-        console.log('DB CONNECTED..');
-    });
-
-    mongoose.connection.on('error', (err) => {
-        console.error('MongoDB connection error:', err.message || err);
-    });
+    const connectWithUri = async (uri) => {
+        await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
+        mongoose.connection.on('connected', () => {
+            console.log('DB CONNECTED..');
+        });
+        mongoose.connection.on('error', (err) => {
+            console.error('MongoDB connection error:', err.message || err);
+        });
+    };
 
     if (atlasUri) {
         try {
             console.log('Trying MongoDB Atlas:', atlasUri);
-            await mongoose.connect(atlasUri, { serverSelectionTimeoutMS: 5000 });
+            await connectWithUri(atlasUri);
             console.log('Connected to MongoDB Atlas');
             return;
         } catch (atlasError) {
@@ -50,7 +52,7 @@ const connectDB = async () => {
 
     try {
         console.log('Trying local MongoDB:', localUri);
-        await mongoose.connect(localUri, { serverSelectionTimeoutMS: 5000 });
+        await connectWithUri(localUri);
         console.log('Connected to local MongoDB');
         return;
     } catch (localError) {
@@ -58,7 +60,7 @@ const connectDB = async () => {
     }
 
     const memoryUri = await startMemoryServer(dbName);
-    await mongoose.connect(memoryUri, { serverSelectionTimeoutMS: 5000 });
+    await connectWithUri(memoryUri);
     console.log('Connected to in-memory MongoDB');
 };
 

@@ -36,9 +36,6 @@ const startApp = async () => {
     }
 };
 
-startApp();
-
-
 // ...ai
 app.post('/api/ask', async (req, res) => {
      try {
@@ -87,7 +84,7 @@ app.get('/', (req, res) => {
      res.send("API WORKING")
 })
 
-app.listen(port, () => console.log('Server started on PORT : ' + port))
+startApp();
 
 //PWD/UN = greatstack
 
